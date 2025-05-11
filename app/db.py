@@ -21,20 +21,20 @@ user_db = {}
 
 def check_n_create():
   try:
-    with open('db.csv', 'x') as _:
+    with open(DB_FILE, 'x') as _:
       pass
   except FileExistsError:
     pass
 
 def read_db():
   check_n_create()
-  with open('db.csv', 'r', newline='') as dbf:
+  with open(DB_FILE, 'r', newline='') as dbf:
     reader = csv.DictReader(dbf, quotechar='|')
     for user in reader:
       user_db[user['email']] = user
 
 def write_db():
-  with open('db.csv', 'w', newline='') as dbf:
+  with open(DB_FILE, 'w', newline='') as dbf:
     writer = csv.DictWriter(dbf, quotechar='|', fieldnames=FIELDNAMES)
     writer.writeheader()
     for _, row in user_db.items():
