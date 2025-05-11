@@ -1,4 +1,4 @@
-Virtual environment set up with `uv` (to set up a virtual environment and run type `uv run flask run`), but the only dependency is `flask`, so `python -m flask` works for now.
+Virtual environment set up with `uv` (to set up a virtual environment and run type `uv run flask run`), but the only dependency is `flask`, so `python -m flask run` works for now.
 
 To access the dashboard create an user and log in. The 4 character 'E-Mail confirmation code' can be found on the console or in the corresponding entry in `db.csv`.
 
