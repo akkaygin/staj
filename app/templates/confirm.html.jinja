@@ -1,0 +1,33 @@
+{% extends "base.html.jinja" %}
+
+{% block title %}Confirm Email{% endblock %}
+
+{% block content %}
+<h1>Email Confirmation</h1>
+
+<p>Please check your email for a confirmation code and enter it below.</p>
+
+<form method="POST">
+  <div>
+    <label for="code">Confirmation Code for {{ email }}:</label>
+    <input type="text" id="code" name="code" placeholder="Enter your code" required>
+    <input type="hidden" name="email_hidden" value="{{ email }}">
+  </div>
+  <button type="submit">Confirm</button>
+</form>
+
+<div style="margin-top: 1em;">
+  <b>Did not receive a code?</b>
+  <a href="{{ url_for('confirm.resend', email=email) }}">
+    <button class="alternative-button" type="button">Request New Code</button>
+  </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="flash {{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+{% endblock %}

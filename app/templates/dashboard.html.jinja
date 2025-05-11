@@ -1,0 +1,58 @@
+{% extends "base.html.jinja" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div>
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    {% if email != None %}
+    <div>
+      <p class="logged-in-info">You are logged in as {{ email }}</p>
+      <a style="float:right" href="{{ url_for('login.logout') }}">Click here to log out.</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="text-align: right; margin-bottom: 10px;">
+    {% if email != None %}
+    showing {{ epp }} entries on page
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}">&lt;&lt;</a>
+    {% endif %}
+    {{ page }}
+    {% if page < total_pages %}
+    <a href="?page={{ page + 1 }}">&gt;&gt;</a>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+{% if users == None %}
+<p>You are not logged in. Log in <a href="{{ url_for('login.login') }}">here</a>.</p>
+{% else %}
+{% for user in users %}
+<div class="user-entry">
+  <dl>
+    <dt>E-Mail:</dt>
+    <dd>{{ user['email'] }}</dd>
+
+    <dt>Password Hash:</dt>
+    <dd>{{ user['hash'] }}</dd>
+
+    <dt>Password Salt:</dt>
+    <dd>{{ user['salt'] }}</dd>
+
+    <dt>Phone Number:</dt>
+    <dd>{{ user['phone'] }}</dd>
+
+    <dt>Address:</dt>
+    <dd>{{ user['address'] }}</dd>
+
+    <dt>Confirmation status:</dt>
+    <dd>{% if user['code'] != 'confirmed' %}Not confirmed (code {{ user['code'] }}){% else %}Confirmed{% endif %}</dd>
+  </dl>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

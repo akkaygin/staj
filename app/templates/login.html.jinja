@@ -1,0 +1,34 @@
+{% extends "base.html.jinja" %}
+
+{% block title %}Log In{% endblock %}
+
+{% block content %}
+<h1>Log In</h1>
+
+<form method="POST">
+  <div>
+    <label for="email">E-Mail Address:</label>
+    <input type="email" id="email" name="email" placeholder="user@example.com" required>
+  </div>
+  <div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" placeholder="Password">
+  </div>
+  <button type="submit">Log In</button>
+</form>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="flash {{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div style="margin-top: 1em;">
+  <b>Don't have an account?</b>
+  <a href="{{ url_for('register.register') }}">
+    <button class="alternative-button" type="button">Register instead</button>
+  </a>
+</div>
+{% endblock %}
