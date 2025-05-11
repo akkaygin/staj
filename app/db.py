@@ -40,6 +40,9 @@ def write_db():
     for _, row in user_db.items():
       writer.writerow(row)
 
+def create_confirmation_code():
+  return token_hex(2)
+
 def add_user(data):
   if data['email'] in user_db:
     if user_db[data['email']]['code'] != 'confirmed':
@@ -50,7 +53,7 @@ def add_user(data):
   salt = token_hex(16)
   dk = pbkdf2_hmac('sha256', bytes(data['password'], 'utf-8'), bytes(salt, 'utf-8'), HASH_ITERATIONS).hex()
   
-  confirmation_code = token_hex(2)
+  confirmation_code = create_confirmation_code()
   print(f'E-Mail confirmation code: {confirmation_code}')
 
   user_db[data['email']] = {
@@ -88,16 +91,20 @@ def confirm_user(data):
   
   return None
 
+def is_user_confirmed(email):
+  return user_db[email]['code'] == 'confirmed'
+
 def resend_confirmation(email):
   if email not in user_db:
     return 'No such E-Mail'
 
   if user_db[email]['code'] == 'confirmed':
-    return 'Confirmation not necessary'
+    return 'E-Mail already confirmed'
   
-  confirmation_code = token_hex(2)
+  confirmation_code = create_confirmation_code()
   print(f'E-Mail confirmation code: {confirmation_code}')
   user_db[email]['code'] = confirmation_code
+  user_db[email]['code_ts'] = int(time())
 
   write_db()
 

@@ -28,12 +28,10 @@ def login():
       flash(error, 'error')
       return render_template('register.html.jinja')
 
-    if error is None:
-      error = db.check_credentials({
-        'email': request.form['email'],
-        'password': request.form['password'],
-      })
-
+    error = db.check_credentials({
+      'email': request.form['email'],
+      'password': request.form['password'],
+    })
     if error is None:
       session['email'] = request.form['email']
       return redirect(url_for('dashboard.dashboard'))
@@ -41,8 +39,6 @@ def login():
     if error == 'E-Mail not confirmed':
       flash(error, 'error')
       return redirect(url_for('confirm.confirm', email=request.form['email']))
-    
-    flash(error, 'error')
   
   return render_template('login.html.jinja')
 
