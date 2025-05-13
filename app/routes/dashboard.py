@@ -6,7 +6,7 @@ DEFAULT_EPP = 4
 
 bp = Blueprint('dashboard', __name__)
 
-@bp.route('/dashboard')
+@bp.get('/dashboard')
 def dashboard():
   if 'email' not in session:
     return render_template('dashboard.html.jinja', users=None, email=None)

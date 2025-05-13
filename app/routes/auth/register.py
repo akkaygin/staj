@@ -41,58 +41,59 @@ def is_address_legal(address):
 
   return None
 
-@bp.route('/auth/register', methods=['GET', 'POST'])
+@bp.get('/auth/register')
 def register():
-  if request.method == 'POST':
-    error = None
-    if not request.form['email']:
-      error = 'An email address is required'
-    elif not request.form['password']:
-      error = 'A password is required'
-    elif not request.form['phone']:
-      error = 'A phone number is required'
-    elif not request.form['address']:
-      error = 'An address is required'
-
-    if error is not None:
-      flash(error, 'error')
-      return render_template('register.html.jinja')
-
-    error = is_email_valid(request.form['email'])
-    if error is not None:
-      flash(error, 'error')
-      return render_template('register.html.jinja')
-    
-    error = is_password_strong(request.form['password'])
-    if error is not None:
-      flash(error, 'error')
-      return render_template('register.html.jinja')
-    
-    error = is_phone_number_valid(request.form['phone'])
-    if error is not None:
-      flash(error, 'error')
-      return render_template('register.html.jinja')
-    
-    error = is_address_legal(request.form['address'])
-    if error is not None:
-      flash(error, 'error')
-      return render_template('register.html.jinja')
-    
-    if error is None:
-      error = db.add_user({
-        'email': request.form['email'],
-        'password': request.form['password'],
-        'phone': request.form['phone'],
-        'address': request.form['address'],
-      })
-
-    if error is None:
-      return redirect(url_for('confirm.confirm', email=request.form['email']))
-      
-    if error == 'E-Mail registered bu not confirmed':
-      flash(error, 'error')
-      return redirect(url_for('confirm.confirm', email=request.form['email']))
-
-    flash(error, 'error')
-  
   return render_template('register.html.jinja')
+
+@bp.post('/auth/register')
+def register_post():
+  error = None
+  if not request.form['email']:
+    error = 'An email address is required'
+  elif not request.form['password']:
+    error = 'A password is required'
+  elif not request.form['phone']:
+    error = 'A phone number is required'
+  elif not request.form['address']:
+    error = 'An address is required'
+
+  if error is not None:
+    flash(error, 'error')
+    return render_template('register.html.jinja')
+
+  error = is_email_valid(request.form['email'])
+  if error is not None:
+    flash(error, 'error')
+    return render_template('register.html.jinja')
+  
+  error = is_password_strong(request.form['password'])
+  if error is not None:
+    flash(error, 'error')
+    return render_template('register.html.jinja')
+  
+  error = is_phone_number_valid(request.form['phone'])
+  if error is not None:
+    flash(error, 'error')
+    return render_template('register.html.jinja')
+  
+  error = is_address_legal(request.form['address'])
+  if error is not None:
+    flash(error, 'error')
+    return render_template('register.html.jinja')
+  
+  if error is None:
+    error = db.add_user({
+      'email': request.form['email'],
+      'password': request.form['password'],
+      'phone': request.form['phone'],
+      'address': request.form['address'],
+    })
+
+  if error is None:
+    return redirect(url_for('confirm.confirm', email=request.form['email']))
+    
+  if error == 'E-Mail registered bu not confirmed':
+    flash(error, 'error')
+    return redirect(url_for('confirm.confirm', email=request.form['email']))
+
+  flash(error, 'error')
