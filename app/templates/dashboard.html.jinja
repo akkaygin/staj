@@ -16,13 +16,13 @@
 
   <div style="text-align: right; margin-bottom: 10px;">
     {% if email != None %}
-    showing {{ epp }} entries on page
-    {% if page > 1 %}
-    <a href="?page={{ page - 1 }}">&lt;&lt;</a>
+    showing {{ plut['pec'] }} entries on page
+    {% if plut['page'] > 1 %}
+    <a href="{{ plut['pp_hl'] }}">&lt;&lt;</a>
     {% endif %}
-    {{ page }}
-    {% if page < total_pages %}
-    <a href="?page={{ page + 1 }}">&gt;&gt;</a>
+    {{ plut['page'] }}
+    {% if plut['page'] < plut['n_pages'] %}
+    <a href="{{ plut['np_hl'] }}">&gt;&gt;</a>
     {% endif %}
     {% endif %}
   </div>

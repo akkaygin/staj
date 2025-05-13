@@ -24,4 +24,4 @@ To access the dashboard create an user and log in. The 4 character 'E-Mail confi
 
 ## Dashboard
 - Individual user listings.
-- Pagination and support for variable number of entries per page* (see [dashboard.py](./app/routes/dashboard.py) ln. 15)
+- Pagination and support for variable number of entries per page.
