@@ -36,9 +36,6 @@ def is_password_strong(password):
   return None
 
 def is_address_legal(address):
-  if bool(re.findall(r'\|', address)):
-    return 'Address cannot contain the \'|\' character'
-
   return None
 
 @bp.get('/auth/register')
