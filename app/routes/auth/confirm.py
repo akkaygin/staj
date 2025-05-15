@@ -14,7 +14,7 @@ def confirm():
     return redirect(url_for('login.login'))
   
   if db.is_user_confirmed(email):
-    flash('E-Mail already confirmed', 'error')
+    flash('User already confirmed', 'error')
     return redirect(url_for('login.login'))
 
   return render_template('confirm.html.jinja', email=email)
@@ -29,7 +29,7 @@ def confirm_post():
     return redirect(url_for('login.login'))
   
   if db.is_user_confirmed(email):
-    flash('E-Mail already confirmed', 'error')
+    flash('User already confirmed', 'error')
     return redirect(url_for('login.login'))
   
   error = db.confirm_user({
@@ -51,7 +51,7 @@ def resend():
     return redirect(url_for('confirm.confirm', email=None))
   
   if db.is_user_confirmed(email):
-    flash('E-Mail already confirmed', 'error')
+    flash('User already confirmed', 'error')
     return redirect(url_for('login.login'))
   
   error = db.resend_confirmation(email)

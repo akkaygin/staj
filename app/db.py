@@ -1,129 +1,146 @@
 from hashlib import pbkdf2_hmac
 from secrets import token_hex
-import csv
-from time import time
+import sqlite3
+from datetime import datetime, timedelta
 
-DB_FILE = 'db.csv'
+DB_FILE = 'database.db'
 HASH_ITERATIONS = 1 # would use 600000 in production
-FIELDNAMES = [
-  'email',
-  'salt',
-  'hash',
-  'phone',
-  'address',
-  'code',
-  'code_ts'
-]
 
 CODE_TIMEOUT = 1800 # 30 minutes
 
-user_db = {}
+def init_db():
+  with sqlite3.connect(DB_FILE) as db:
+    cursor = db.cursor()
+    cursor.execute('''
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-def check_n_create():
-  try:
-    with open(DB_FILE, 'x') as _:
-      pass
-  except FileExistsError:
-    pass
+        password TEXT NOT NULL,
+        salt TEXT NOT NULL,
+        
+        email TEXT NOT NULL,
+        address TEXT NOT NULL,
+        phone TEXT NOT NULL,
 
-def read_db():
-  check_n_create()
-  with open(DB_FILE, 'r', newline='') as dbf:
-    reader = csv.DictReader(dbf, quotechar='|')
-    for user in reader:
-      user_db[user['email']] = user
-
-def write_db():
-  with open(DB_FILE, 'w', newline='') as dbf:
-    writer = csv.DictWriter(dbf, quotechar='|', fieldnames=FIELDNAMES)
-    writer.writeheader()
-    for _, row in user_db.items():
-      writer.writerow(row)
+        is_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
+        confirmation_code TEXT,
+        confirmation_expiry TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    ''')
+    db.commit()
 
 def create_confirmation_code():
   return token_hex(2)
 
 def add_user(data):
-  if data['email'] in user_db:
-    if user_db[data['email']]['code'] != 'confirmed':
-      return 'E-Mail registered bu not confirmed'
-    
-    return 'E-Mail address already registered'
+  with sqlite3.connect(DB_FILE) as db:
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM users WHERE email = ?;', (data['email'],))
+    query_result = cursor.fetchone()
+    if query_result is not None:
+      if query_result["is_confirmed"] is True:
+        return 'User registered but not confirmed'
+      return 'User already registered'
+
+    salt = token_hex(16)
+    dk = pbkdf2_hmac('sha256', bytes(data['password'], 'utf-8'), bytes(salt, 'utf-8'), HASH_ITERATIONS).hex()
   
-  salt = token_hex(16)
-  dk = pbkdf2_hmac('sha256', bytes(data['password'], 'utf-8'), bytes(salt, 'utf-8'), HASH_ITERATIONS).hex()
+    confirmation_code = create_confirmation_code()
+    print(f'E-Mail confirmation code: {confirmation_code}')
+
+    values = (dk, salt, data['email'], data['address'], data['phone'], confirmation_code, datetime.now() + timedelta(minutes=CODE_TIMEOUT))
+    cursor.execute('INSERT INTO users (password, salt, email, address, phone, confirmation_code, confirmation_expiry) VALUES (?, ?, ?, ?, ?, ?, ?);', values)
   
-  confirmation_code = create_confirmation_code()
-  print(f'E-Mail confirmation code: {confirmation_code}')
-
-  user_db[data['email']] = {
-    'email': data['email'],
-    'salt': str(salt),
-    'hash': dk,
-    'phone': data['phone'],
-    'address': data['address'],
-    'code': confirmation_code,
-    'code_ts': int(time())
-  }
-
-  write_db()
-
   return None
 
 def confirm_user(data):
-  if data['email'] not in user_db:
-    return 'No such E-Mail'
-  
-  user = user_db[data['email']]
+  with sqlite3.connect(DB_FILE) as db:
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM users WHERE email = ?;', (data['email'],))
+    query_result = cursor.fetchone()
+    if query_result is None:
+      return 'User does not exist'
+    
+    if query_result['is_confirmed'] is True:
+      return 'User already confirmed'
+      
+    if query_result['confirmation_code'] == data['code']:
+      if datetime.fromisoformat(query_result[9]) < datetime.now():
+        return 'Code has timed out'
+        
+      cursor.execute('UPDATE users SET is_confirmed = TRUE WHERE email = ?;', (data['email'],))
+      db.commit()
 
-  if user['code'] == 'confirmed':
-    return 'E-Mail already confirmed'
-  
-  if user['code'] != data['code']:
-    return 'Invalid confirmation code'
-  
-  if int(time()) - int(user['code_ts']) > CODE_TIMEOUT:
-    return 'Code has timed out'
-  
-  user_db[data['email']]['code'] = 'confirmed'
-
-  write_db()
-  
   return None
 
 def is_user_confirmed(email):
-  return user_db[email]['code'] == 'confirmed'
+  with sqlite3.connect(DB_FILE) as db:
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM users WHERE email = ?;', (email,))
+    query_result = cursor.fetchone()
+    if query_result is not None:
+      return query_result['is_confirmed']
+    
+    return False
 
 def resend_confirmation(email):
-  if email not in user_db:
-    return 'No such E-Mail'
+  with sqlite3.connect(DB_FILE) as db:
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM users WHERE email = ?;', (email,))
+    query_result = cursor.fetchone()
+    if query_result is None:
+      return 'User does not exist'
+    
+    if query_result['is_confirmed'] is True:
+      return 'User already confirmed'
+      
+    confirmation_code = create_confirmation_code()
+    print(f'E-Mail confirmation code: {confirmation_code}')
 
-  if user_db[email]['code'] == 'confirmed':
-    return 'E-Mail already confirmed'
-  
-  confirmation_code = create_confirmation_code()
-  print(f'E-Mail confirmation code: {confirmation_code}')
-  user_db[email]['code'] = confirmation_code
-  user_db[email]['code_ts'] = int(time())
+    confirmation_expiry = datetime.now() + timedelta(minutes=30)
 
-  write_db()
+    cursor.execute('UPDATE users SET confirmation_code = ? confirmation_expiry = ? WHERE email = ?;', (confirmation_code, confirmation_expiry, email))
+    db.commit()
 
   return None
-
+  
 def check_credentials(data):
-  '''
-    this can be converted to an 'invalid credential'
-    to anonymize email addresses
-  '''
-  if data['email'] not in user_db:
-    return 'Invalid E-Mail address'
-  
-  user = user_db[data['email']]
-  dk = pbkdf2_hmac('sha256', bytes(data['password'], 'utf-8'), bytes(user['salt'], 'utf-8'), HASH_ITERATIONS).hex()
-  if dk != user['hash']:
-    return 'Invalid password'
-  
-  if user['code'] != 'confirmed':
-    return 'E-Mail not confirmed'
-  
+  with sqlite3.connect(DB_FILE) as db:
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM users WHERE email = ?;', (data['email'],))
+    query_result = cursor.fetchone()
+    if query_result is None:
+      return 'User does not exist'
+    
+    dk = pbkdf2_hmac('sha256', bytes(data['password'], 'utf-8'), bytes(query_result['salt'], 'utf-8'), HASH_ITERATIONS).hex()
+    if data['password'] != dk:
+      return 'Invalid password'
+      
+    if not query_result['is_confirmed']:
+      return 'User not confirmed'
+      
   return None
+
+SORTABLE_FIELD_NAMES = {'id', 'email', 'created', 'phone', 'address', 'is_confirmed', 'code_expiry'}
+def get_user_list(page, epp, sort, dir):
+  sort = sort if sort in SORTABLE_FIELD_NAMES else 'id'
+  dir = 'DESC' if dir == 'desc' else 'ASC'
+
+  with sqlite3.connect(DB_FILE) as db:
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+    cursor.execute(f'SELECT * FROM users ORDER BY {sort} {dir} LIMIT ? OFFSET ?', (epp, page * epp))
+    return [dict(row) for row in cursor.fetchall()]
+
+def get_user_count():
+  with sqlite3.connect(DB_FILE) as db:
+    cursor = db.cursor()
+    cursor.execute('SELECT COUNT(*) FROM users;')
+    result = cursor.fetchone()
+    return result[0] if result else 0

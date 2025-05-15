@@ -92,8 +92,9 @@ def register_post():
   if error is None:
     return redirect(url_for('confirm.confirm', email=request.form['email']))
     
-  if error == 'E-Mail registered bu not confirmed':
+  if error == 'User registered but not confirmed':
     flash(error, 'error')
     return redirect(url_for('confirm.confirm', email=request.form['email']))
 
   flash(error, 'error')
+  return render_template('register.html.jinja')

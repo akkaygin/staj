@@ -7,7 +7,7 @@ def create_app():
   )
 
   from . import db
-  db.read_db()
+  db.init_db()
 
   from .routes.auth import register
   app.register_blueprint(register.bp)

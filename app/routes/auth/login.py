@@ -39,9 +39,12 @@ def login_post():
     session['email'] = request.form['email']
     return redirect(url_for('dashboard.dashboard'))
   
-  if error == 'E-Mail not confirmed':
+  if error == 'User not confirmed':
     flash(error, 'error')
     return redirect(url_for('confirm.confirm', email=request.form['email']))
+  
+  flash(error, 'error')
+  return render_template('login.html.jinja')
 
 @bp.get('/auth/logout')
 def logout():
