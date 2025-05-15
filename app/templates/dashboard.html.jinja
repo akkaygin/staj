@@ -2,19 +2,19 @@
 {% set new_dir = 'desc' if current_sort == field and current_dir == 'asc' else 'asc' %}
 {% set q = query.to_dict() %}
 {% set q = q.update({'sort': field, 'dir': new_dir}) or q %}
-<a href="?{{ q|urlencode }}" {% if current_sort==field %}class="selected" {% endif %}>{{ label }}</a>
+<a href="?{{ q | urlencode }}" {% if current_sort == field %}class="selected"{% endif %}>{{ label }}</a>
 {% endmacro %}
 
 {% macro page_link(label, page_number, current_page, query) %}
 {% set q = query.to_dict() %}
 {% set q = q.update({'page': page_number}) or q %}
-<a href="?{{ q | urlencode }}" {% if current_sort==field %}class="selected" {% endif %}>{{ label }}</a>
+<a href="?{{ q | urlencode }}" {% if current_page == page_number %}class="selected"{% endif %}>{{ label }}</a>
 {% endmacro %}
 
 {% macro epp_link(label, epp, current_epp, query) %}
 {% set q = query.to_dict() %}
 {% set q = q.update({'epp': epp}) or q %}
-<a href="?{{ q | urlencode }}" {% if current_sort==field %}class="selected" {% endif %}>{{ label }}</a>
+<a href="?{{ q | urlencode }}" {% if current_epp == epp %}class="selected"{% endif %}>{{ label }}</a>
 {% endmacro %}
 
 {% extends "base.html.jinja" %}
@@ -42,8 +42,8 @@
     entries on page
 
     {{ page_link('<<', plut['page'] - 1, plut['page'], query) if plut['page']> 1 }}
-      {{ plut['page'] }}
-      {{ page_link('>>', plut['page'] + 1, plut['page'], query) if plut['page'] < plut['n_pages'] }} {% endif %}</div>
+    {{ plut['page'] }}
+    {{ page_link('>>', plut['page'] + 1, plut['page'], query) if plut['page'] < plut['n_pages'] }} {% endif %}
   </div>
 
   {% if users == None %}
@@ -93,5 +93,6 @@
       {% endfor %}
     </tbody>
   </table>
-  {% endif %}
-  {% endblock %}
+</div>
+{% endif %}
+{% endblock %}
