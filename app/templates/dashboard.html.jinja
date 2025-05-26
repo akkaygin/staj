@@ -88,7 +88,13 @@
           -
           {% endif %}
         </td>
-        <td>{{ user['confirmation_expiry'] }}</td>
+        <td>
+          {% if not user['is_confirmed'] %}
+          {{ user['confirmation_expiry'] }}
+          {% else %}
+          -
+          {% endif %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
