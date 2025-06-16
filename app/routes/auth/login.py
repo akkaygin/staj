@@ -7,9 +7,8 @@ bp = Blueprint('login', __name__)
 
 def is_email_valid(email):
   if bool(re.fullmatch(r'^[\w\.-]+@[\w\.-]+\.\w+$', email)):
-    return None
-  
-  return 'Enter a valid E-Mail address'
+    return True
+  return False
   
 @bp.get('/auth/login')
 def login():
@@ -20,15 +19,15 @@ def login():
 
 @bp.post('/auth/login')
 def login_post():
-  error = None
   if not request.form['email']:
-    error = 'An email address is required'
+    flash('An email address is required', 'error')
+    return render_template('register.html')
   elif not request.form['password']:
-    error = 'A password is required'
+    flash('A password is required', 'error')
+    return render_template('register.html')
 
-  error = is_email_valid(request.form['email'])
-  if error is not None:
-    flash(error, 'error')
+  if not is_email_valid(request.form['email']):
+    flash('Enter a valid E-Mail address', 'error')
     return render_template('register.html')
 
   error = db.check_credentials({

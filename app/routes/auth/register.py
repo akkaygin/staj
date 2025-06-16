@@ -7,15 +7,13 @@ bp = Blueprint('register', __name__)
 
 def is_email_valid(email):
   if bool(re.fullmatch(r'^[\w\.-]+@[\w\.-]+\.\w+$', email)):
-    return None
-  
-  return 'Enter a valid E-Mail address'
+    return True
+  return False
 
 def is_phone_number_valid(number):
   if bool(re.fullmatch(r'\+?\d{10,15}', number)):
-    return None
-  
-  return 'Enter a valid phone number'
+    return True
+  return False
 
 def is_password_strong(password):
   if len(password) < 8:
@@ -35,32 +33,27 @@ def is_password_strong(password):
 
   return None
 
-def is_address_legal(address):
-  return None
-
 @bp.get('/auth/register')
 def register():
   return render_template('register.html')
 
 @bp.post('/auth/register')
 def register_post():
-  error = None
   if not request.form['email']:
-    error = 'An email address is required'
+    flash('An email address is required', 'error')
+    return render_template('register.html')
   elif not request.form['password']:
-    error = 'A password is required'
+    flash('A password is required', 'error')
+    return render_template('register.html')
   elif not request.form['phone']:
-    error = 'A phone number is required'
+    flash('A phone number is required', 'error')
+    return render_template('register.html')
   elif not request.form['address']:
-    error = 'An address is required'
-
-  if error is not None:
-    flash(error, 'error')
+    flash('An address is required', 'error')
     return render_template('register.html')
 
-  error = is_email_valid(request.form['email'])
-  if error is not None:
-    flash(error, 'error')
+  if not is_email_valid(request.form['email']) is not None:
+    flash('Enter a valid E-Mail address', 'error')
     return render_template('register.html')
   
   error = is_password_strong(request.form['password'])
@@ -68,30 +61,17 @@ def register_post():
     flash(error, 'error')
     return render_template('register.html')
   
-  error = is_phone_number_valid(request.form['phone'])
-  if error is not None:
-    flash(error, 'error')
+  if not is_phone_number_valid(request.form['phone']) is not None:
+    flash('Enter a valid phone number', 'error')
     return render_template('register.html')
   
-  error = is_address_legal(request.form['address'])
-  if error is not None:
-    flash(error, 'error')
-    return render_template('register.html')
-  
-  if error is None:
-    error = db.add_user({
-      'email': request.form['email'],
-      'password': request.form['password'],
-      'phone': request.form['phone'],
-      'address': request.form['address'],
-    })
-
-  if error is None:
-    return redirect(url_for('confirm.confirm', email=request.form['email']))
-    
+  error = db.add_user({
+    'email': request.form['email'],
+    'password': request.form['password'],
+    'phone': request.form['phone'],
+    'address': request.form['address'],
+  })
   if error == 'User registered but not confirmed':
-    flash(error, 'error')
-    return redirect(url_for('confirm.confirm', email=request.form['email']))
-
-  flash(error, 'error')
-  return render_template('register.html')
+    return redirect(url_for('login.login'))
+  
+  return redirect(url_for('confirm.confirm', email=request.form['email']))

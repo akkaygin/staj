@@ -119,7 +119,7 @@ def check_credentials(data):
       return 'User does not exist'
     
     dk = pbkdf2_hmac('sha256', bytes(data['password'], 'utf-8'), bytes(query_result['salt'], 'utf-8'), HASH_ITERATIONS).hex()
-    if data['password'] != dk:
+    if query_result['password'] != dk:
       return 'Invalid password'
       
     if not query_result['is_confirmed']:
