@@ -16,7 +16,7 @@ def login():
   if 'email' in session:
     return redirect(url_for('dashboard.dashboard'))
   
-  return render_template('login.html.jinja')
+  return render_template('login.html')
 
 @bp.post('/auth/login')
 def login_post():
@@ -29,7 +29,7 @@ def login_post():
   error = is_email_valid(request.form['email'])
   if error is not None:
     flash(error, 'error')
-    return render_template('register.html.jinja')
+    return render_template('register.html')
 
   error = db.check_credentials({
     'email': request.form['email'],
@@ -44,7 +44,7 @@ def login_post():
     return redirect(url_for('confirm.confirm', email=request.form['email']))
   
   flash(error, 'error')
-  return render_template('login.html.jinja')
+  return render_template('login.html')
 
 @bp.get('/auth/logout')
 def logout():

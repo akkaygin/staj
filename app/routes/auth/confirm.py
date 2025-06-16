@@ -17,7 +17,7 @@ def confirm():
     flash('User already confirmed', 'error')
     return redirect(url_for('login.login'))
 
-  return render_template('confirm.html.jinja', email=email)
+  return render_template('confirm.html', email=email)
 
 @bp.post('/auth/confirm')
 def confirm_post():

@@ -14,7 +14,7 @@ def make_url(page, epp):
 @bp.get('/dashboard')
 def dashboard():
   if 'email' not in session:
-    return render_template('dashboard.html.jinja', users=None, email=None)
+    return render_template('dashboard.html', users=None, email=None)
   
   epp = request.args.get('epp', DEFAULT_EPP, int)
   page = request.args.get('page', 1, int)
@@ -38,6 +38,6 @@ def dashboard():
     'epps': [10, 30, 50],
   }
   
-  return render_template('dashboard.html.jinja', users=user_list,\
+  return render_template('dashboard.html', users=user_list,\
                          email=session['email'], plut=pagination_lut,
                          sort=sort, dir=dir, query=request.args)

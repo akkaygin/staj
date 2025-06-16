@@ -40,7 +40,7 @@ def is_address_legal(address):
 
 @bp.get('/auth/register')
 def register():
-  return render_template('register.html.jinja')
+  return render_template('register.html')
 
 @bp.post('/auth/register')
 def register_post():
@@ -56,27 +56,27 @@ def register_post():
 
   if error is not None:
     flash(error, 'error')
-    return render_template('register.html.jinja')
+    return render_template('register.html')
 
   error = is_email_valid(request.form['email'])
   if error is not None:
     flash(error, 'error')
-    return render_template('register.html.jinja')
+    return render_template('register.html')
   
   error = is_password_strong(request.form['password'])
   if error is not None:
     flash(error, 'error')
-    return render_template('register.html.jinja')
+    return render_template('register.html')
   
   error = is_phone_number_valid(request.form['phone'])
   if error is not None:
     flash(error, 'error')
-    return render_template('register.html.jinja')
+    return render_template('register.html')
   
   error = is_address_legal(request.form['address'])
   if error is not None:
     flash(error, 'error')
-    return render_template('register.html.jinja')
+    return render_template('register.html')
   
   if error is None:
     error = db.add_user({
@@ -94,4 +94,4 @@ def register_post():
     return redirect(url_for('confirm.confirm', email=request.form['email']))
 
   flash(error, 'error')
-  return render_template('register.html.jinja')
+  return render_template('register.html')
