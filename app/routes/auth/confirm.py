@@ -6,31 +6,32 @@ bp = Blueprint('confirm', __name__)
 
 @bp.route('/auth/confirm', methods=['GET', 'POST'])
 def confirm():
-  error = None
   email = request.args.get('email')
   if email is None:
-    error = 'An E-Mail address is required for confirmation'
-    flash(error, 'error')
+    flash('An E-Mail address is required for confirmation', 'error')
     return redirect(url_for('login.login'))
   
   if db.is_user_confirmed(email):
     flash('E-Mail already confirmed', 'error')
     return redirect(url_for('login.login'))
 
-  if request.method == 'POST':  
-    error = db.confirm_user({
-      'email': email,
-      'code': request.form['code'],
-    })
-    if error is None:
+  if request.method == 'POST':
+    code = request.form['code']
+    if code is None:
+      flash('Confirmation code is missing', 'error')
+      return redirect(url_for('confirm.confirm', email=email))
+    
+    error = db.confirm_user({'email': email, 'code': code})
+    if error == 'Code has timed out':
+      flash('Code has timed out', 'error')
+      return redirect(url_for('confirm.resend', email=email))
+    elif error == 'Invalid confirmation code':
+      flash('Invalid confirmation code', 'error')
+    else:
       session['email'] = email
       return redirect(url_for('dashboard.dashboard'))
-    
-    if error == 'Code has timed out':
-      flash(error, 'error')
-      return redirect(url_for('confirm.resend', email=email))
   
-  return render_template('confirm.html.jinja', email=email)
+  return render_template('confirm.html', email=email)
 
 @bp.route('/auth/resend', methods=['GET', 'POST'])
 def resend():

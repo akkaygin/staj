@@ -7,9 +7,9 @@ bp = Blueprint('login', __name__)
 
 def is_email_valid(email):
   if bool(re.fullmatch(r'^[\w\.-]+@[\w\.-]+\.\w+$', email)):
-    return None
+    return True
   
-  return 'Enter a valid E-Mail address'
+  return False
   
 @bp.route('/auth/login', methods=['GET', 'POST'])
 def login():
@@ -17,30 +17,30 @@ def login():
     return redirect(url_for('dashboard.dashboard'))
 
   if request.method == 'POST':
-    error = None
-    if not request.form['email']:
-      error = 'An email address is required'
-    elif not request.form['password']:
-      error = 'A password is required'
-
-    error = is_email_valid(request.form['email'])
-    if error is not None:
-      flash(error, 'error')
-      return render_template('register.html.jinja')
-
-    error = db.check_credentials({
-      'email': request.form['email'],
-      'password': request.form['password'],
-    })
-    if error is None:
-      session['email'] = request.form['email']
-      return redirect(url_for('dashboard.dashboard'))
+    if request.form['email'] is None:
+      flash('An email address is required', 'error')
+      return render_template('login.html')
     
+    if request.form['password'] is None:
+      flash('A password is required', 'error')
+      return render_template('login.html')
+
+    if not is_email_valid(request.form['email']):
+      flash('Enter a valid E-Mail address', 'error')
+      return render_template('register.html')
+    
+    error = db.check_credentials({'email': request.form['email'], 'password': request.form['password']})
     if error == 'E-Mail not confirmed':
       flash(error, 'error')
       return redirect(url_for('confirm.confirm', email=request.form['email']))
+    elif error is not None:
+      flash(error, 'error')
+      return render_template('login.html')
+    else:
+      session['email'] = request.form['email']
+      return redirect(url_for('dashboard.dashboard'))
   
-  return render_template('login.html.jinja')
+  return render_template('login.html')
 
 @bp.route('/auth/logout')
 def logout():
