@@ -42,13 +42,16 @@ def register_post():
   if not request.form['email']:
     flash('An email address is required', 'error')
     return render_template('register.html')
-  elif not request.form['password']:
+  
+  if not request.form['password']:
     flash('A password is required', 'error')
     return render_template('register.html')
-  elif not request.form['phone']:
+  
+  if not request.form['phone']:
     flash('A phone number is required', 'error')
     return render_template('register.html')
-  elif not request.form['address']:
+  
+  if not request.form['address']:
     flash('An address is required', 'error')
     return render_template('register.html')
 
@@ -71,7 +74,7 @@ def register_post():
     'phone': request.form['phone'],
     'address': request.form['address'],
   })
-  if error == 'User registered but not confirmed':
+  if error == 'User already registered':
     return redirect(url_for('login.login'))
   
   return redirect(url_for('confirm.confirm', email=request.form['email']))
