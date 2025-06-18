@@ -3,7 +3,15 @@
 {% block title %}Confirm Email{% endblock %}
 
 {% block content %}
-<h1>Email Confirmation</h1>
+<div class="dashboard-header">
+  <h1>Email Confirmation</h1>
+  {% if email != None %}
+  <div>
+    <p class="logged-in-info">You are logged in as {{ email }}</p>
+    <a style="float:right" href="{{ url_for('login.logout') }}">Click here to log out.</a>
+  </div>
+  {% endif %}
+</div>
 
 <p>Please check your email for a confirmation code and enter it below.</p>
 
@@ -11,7 +19,6 @@
   <div>
     <label for="code">Confirmation Code for {{ email }}:</label>
     <input type="text" id="code" name="code" placeholder="Enter your code" required>
-    <input type="hidden" name="email_hidden" value="{{ email }}">
   </div>
   <button type="submit">Confirm</button>
 </form>

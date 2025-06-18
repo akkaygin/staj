@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, session, request, url_for
+from flask import Blueprint, render_template, request, url_for, redirect, flash
+from flask_login import login_required, current_user
 from math import ceil
 
 from .. import db
@@ -12,10 +13,12 @@ def make_url(page, epp):
   return url_for('dashboard.dashboard',page=page, epp=None if epp == DEFAULT_EPP else epp)
 
 @bp.get('/dashboard')
+@login_required
 def dashboard():
-  if 'email' not in session:
-    return render_template('dashboard.html', users=None, email=None)
-  
+  if not current_user.is_confirmed:
+    flash('Confirm E-Mail', 'error')
+    return redirect(url_for('confirm.confirm'))
+  user = current_user
   epp = request.args.get('epp', DEFAULT_EPP, int)
   page = request.args.get('page', 1, int)
   sort = request.args.get('sort', 'id')
@@ -39,5 +42,5 @@ def dashboard():
   }
   
   return render_template('dashboard.html', users=user_list,\
-                         email=session['email'], plut=pagination_lut,
+                         email=user.email, plut=pagination_lut,
                          sort=sort, dir=dir, query=request.args)

@@ -23,7 +23,7 @@ To access the dashboard create an user and log in. The 4 character 'E-Mail confi
 ## Login Page
 - Client side email validation.
 - E-Mail and password pair checking.
-- Sessions implementation.
+- Session management with Flask-Login.
 
 ## Dashboard
 - Table display with sorting options.
