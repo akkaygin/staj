@@ -1,3 +1,22 @@
+{% macro sort_link(field, label, current_sort, current_dir, query) %}
+{% set new_dir = 'desc' if current_sort == field and current_dir == 'asc' else 'asc' %}
+{% set q = query.to_dict() %}
+{% set q = q.update({'sort': field, 'dir': new_dir}) or q %}
+<a href="?{{ q | urlencode }}" {% if current_sort == field %}class="selected"{% endif %}>{{ label }}</a>
+{% endmacro %}
+
+{% macro page_link(label, page_number, current_page, query) %}
+{% set q = query.to_dict() %}
+{% set q = q.update({'page': page_number}) or q %}
+<a href="?{{ q | urlencode }}" {% if current_page == page_number %}class="selected"{% endif %}>{{ label }}</a>
+{% endmacro %}
+
+{% macro epp_link(label, epp, current_epp, query) %}
+{% set q = query.to_dict() %}
+{% set q = q.update({'epp': epp}) or q %}
+<a href="?{{ q | urlencode }}" {% if current_epp == epp %}class="selected"{% endif %}>{{ label }}</a>
+{% endmacro %}
+
 {% extends "base.html" %}
 
 {% block title %}Dashboard{% endblock %}
@@ -16,43 +35,70 @@
 
   <div style="text-align: right; margin-bottom: 10px;">
     {% if email != None %}
-    showing {{ plut['pec'] }} entries on page
-    {% if plut['page'] > 1 %}
-    <a href="{{ plut['pp_hl'] }}">&lt;&lt;</a>
-    {% endif %}
+    showing
+    {% for epp in plut['epps'] %}
+    {{ epp_link(epp, epp, plut['epp'], query) }}
+    {% endfor %}
+    entries on page
+
+    {{ page_link('<<', plut['page'] - 1, plut['page'], query) if plut['page']> 1 }}
     {{ plut['page'] }}
-    {% if plut['page'] < plut['n_pages'] %}
-    <a href="{{ plut['np_hl'] }}">&gt;&gt;</a>
-    {% endif %}
-    {% endif %}
+    {{ page_link('>>', plut['page'] + 1, plut['page'], query) if plut['page'] < plut['n_pages'] }} {% endif %}
   </div>
+
+  {% if users == None %}
+  <p>You are not logged in. Log in <a href="{{ url_for('login.login') }}">here</a>.</p>
+  {% else %}
+  <table id="userTable">
+    <thead>
+      <tr>
+        <th>{{ sort_link('id', 'ID', sort, dir, query) }}</th>
+        <th>{{ sort_link('created', 'Created', sort, dir, query) }}</th>
+        <th>{{ sort_link('email', 'Email', sort, dir, query) }}</th>
+        <th>Password Hash</th>
+        <th>Password Salt</th>
+        <th>{{ sort_link('phone', 'Phone', sort, dir, query) }}</th>
+        <th>{{ sort_link('address', 'Address', sort, dir, query) }}</th>
+        <th>{{ sort_link('is_confirmed', 'Confirmed', sort, dir, query) }}</th>
+        <th>Confirmation Code</th>
+        <th>{{ sort_link('confirmation_expiry', 'Code Expiry', sort, dir, query) }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user['id'] }}</td>
+        <td>{{ user['created'] }}</td>
+        <td>{{ user['email'] }}</td>
+        <td>{{ user['password'] }}</td>
+        <td>{{ user['salt'] }}</td>
+        <td>{{ user['phone'] }}</td>
+        <td>{{ user['address'] }}</td>
+        <td>
+          {% if user['is_confirmed'] %}
+          Confirmed
+          {% else %}
+          Not confirmed
+          {% endif %}
+        </td>
+        <td>
+          {% if not user['is_confirmed'] %}
+          {{ user['confirmation_code'] }}
+          {% else %}
+          -
+          {% endif %}
+        </td>
+        <td>
+          {% if not user['is_confirmed'] %}
+          {{ user['confirmation_expiry'] }}
+          {% else %}
+          -
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
-
-{% if users == None %}
-<p>You are not logged in. Log in <a href="{{ url_for('login.login') }}">here</a>.</p>
-{% else %}
-{% for user in users %}
-<div class="user-entry">
-  <dl>
-    <dt>E-Mail:</dt>
-    <dd>{{ user['email'] }}</dd>
-
-    <dt>Password Hash:</dt>
-    <dd>{{ user['hash'] }}</dd>
-
-    <dt>Password Salt:</dt>
-    <dd>{{ user['salt'] }}</dd>
-
-    <dt>Phone Number:</dt>
-    <dd>{{ user['phone'] }}</dd>
-
-    <dt>Address:</dt>
-    <dd>{{ user['address'] }}</dd>
-
-    <dt>Confirmation status:</dt>
-    <dd>{% if user['code'] != 'confirmed' %}Not confirmed (code {{ user['code'] }}){% else %}Confirmed{% endif %}</dd>
-  </dl>
-</div>
-{% endfor %}
 {% endif %}
 {% endblock %}

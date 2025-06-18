@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import current_user
 
 from ... import db
 
@@ -6,47 +7,38 @@ bp = Blueprint('confirm', __name__)
 
 @bp.route('/auth/confirm', methods=['GET', 'POST'])
 def confirm():
-  email = request.args.get('email')
-  if email is None:
-    flash('An E-Mail address is required for confirmation', 'error')
+  if not current_user.is_authenticated:
     return redirect(url_for('login.login'))
   
-  if db.is_user_confirmed(email):
-    flash('E-Mail already confirmed', 'error')
-    return redirect(url_for('login.login'))
-
+  if current_user.is_confirmed:
+    return redirect(url_for('dashboard.dashboard'))
+  
+  if db.is_confirmation_expired(current_user.email):
+    flash('Code has timed out', 'error')
+    return redirect(url_for('confirm.resend'))
+  
   if request.method == 'POST':
-    code = request.form['code']
-    if code is None:
-      flash('Confirmation code is missing', 'error')
-      return redirect(url_for('confirm.confirm', email=email))
-    
-    error = db.confirm_user({'email': email, 'code': code})
-    if error == 'Code has timed out':
-      flash('Code has timed out', 'error')
-      return redirect(url_for('confirm.resend', email=email))
-    elif error == 'Invalid confirmation code':
-      flash('Invalid confirmation code', 'error')
+    code = None
+    if request.args.get('code') is not None:
+      code = request.args.get('code')
     else:
-      session['email'] = email
+      code = request.form['code']
+    
+    if db.confirm_user({'email': current_user.email, 'code': code}):
       return redirect(url_for('dashboard.dashboard'))
-  
-  return render_template('confirm.html', email=email)
+    
+    flash('Invalid code', 'error')
+    
+  return render_template('confirm.html', email=current_user.email)
 
-@bp.route('/auth/resend', methods=['GET', 'POST'])
+@bp.get('/auth/resend')
 def resend():
-  email = request.args.get('email')
-  if email is None:
-    return redirect(url_for('confirm.confirm', email=None))
-  
-  if db.is_user_confirmed(email):
-    flash('E-Mail already confirmed', 'error')
+  if not current_user.is_authenticated:
     return redirect(url_for('login.login'))
   
-  error = db.resend_confirmation(email)
-  if error is None:
-    flash('Confirmation E-Mail sent', 'success')
-    return redirect(url_for('confirm.confirm', email=email))
-
-  flash(error, 'error')
-  return redirect(url_for('login.login'))
+  if current_user.is_confirmed:
+    return redirect(url_for('dashboard.dashboard'))
+  
+  db.resend_confirmation(current_user.email)
+  flash('Confirmation E-Mail sent', 'success')
+  return redirect(url_for('confirm.confirm'))

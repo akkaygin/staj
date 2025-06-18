@@ -1,13 +1,12 @@
 from flask import Flask, redirect, url_for
 
+from . import db
+
 def create_app():
   app = Flask(__name__)
-  app.config.from_mapping(
-    SECRET_KEY='dev',
-  )
+  app.secret_key = 'dev'
 
-  from . import db
-  db.read_db()
+  db.init_db()
 
   from .routes.auth import register
   app.register_blueprint(register.bp)
@@ -24,6 +23,10 @@ def create_app():
   return app
 
 app = create_app()
+
+db.login_manager.init_app(app)
+db.login_manager.login_view = 'login.login'
+db.login_manager.login_message_category = 'info'
 
 @app.route('/')
 def index():
